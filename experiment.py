@@ -170,6 +170,21 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(features, sos4, on=["Season", "TeamID"], how="left")
     features["SOS4"] = features["SOS4"].fillna(0.5)
 
+    # --- Fifth/Sixth-order SOS ---
+    opp_sos4_lookup = sos4.rename(columns={"TeamID": "OppID", "SOS4": "OppSOS4"})
+    opp_sos5 = pd.merge(all_games, opp_sos4_lookup, on=["Season", "OppID"], how="left")
+    sos5 = opp_sos5.groupby(["Season", "TeamID"])["OppSOS4"].mean().reset_index()
+    sos5.columns = ["Season", "TeamID", "SOS5"]
+    features = pd.merge(features, sos5, on=["Season", "TeamID"], how="left")
+    features["SOS5"] = features["SOS5"].fillna(0.5)
+
+    opp_sos5_lookup = sos5.rename(columns={"TeamID": "OppID", "SOS5": "OppSOS5"})
+    opp_sos6 = pd.merge(all_games, opp_sos5_lookup, on=["Season", "OppID"], how="left")
+    sos6 = opp_sos6.groupby(["Season", "TeamID"])["OppSOS5"].mean().reset_index()
+    sos6.columns = ["Season", "TeamID", "SOS6"]
+    features = pd.merge(features, sos6, on=["Season", "TeamID"], how="left")
+    features["SOS6"] = features["SOS6"].fillna(0.5)
+
     # --- Massey ordinal rankings (men only) ---
     massey = load_massey_ordinals(data)
     if not massey.empty:
@@ -206,14 +221,15 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "NetEff", "AdjNetEff", "TORate"]
+FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "SOS5", "SOS6",
+                "NetEff", "AdjNetEff", "TORate"]
 
 
 # ---------------------------------------------------------------------------
 # Matchup feature builder
 # ---------------------------------------------------------------------------
 
-RATIO_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3"]
+RATIO_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4"]
 
 
 def build_matchup_features(team_features: pd.DataFrame, matchups: pd.DataFrame) -> pd.DataFrame:
