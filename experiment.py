@@ -292,6 +292,10 @@ def build_team_features(data: dict) -> pd.DataFrame:
         features = pd.merge(features, seed_wp[["SeedNum", "SeedHistWinPct"]], on="SeedNum", how="left")
         features["SeedHistWinPct"] = features["SeedHistWinPct"].fillna(0.5)
 
+    # --- Pythagorean win expectation ---
+    exp = 13.91  # basketball exponent
+    features["PythWinPct"] = features["AvgPtsFor"] ** exp / (features["AvgPtsFor"] ** exp + features["AvgPtsAgainst"] ** exp + 1e-10)
+
     # --- Win rate vs better opponents (upset resistance) ---
     opp_wp_full = record[["Season", "TeamID", "WinPct"]].copy()
     # Games where team won against a better opponent (higher WinPct)
@@ -340,7 +344,8 @@ FEATURE_COLS = ["MasseyMeanRank", "NetEff", "EffRatio", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "NetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "NetEff_x_SeedWP",
-                "UpsetRate", "Upset_x_SeedWP", "EffSOS1_zseas", "EffRatio_x_SeedWP"]
+                "UpsetRate", "Upset_x_SeedWP", "EffSOS1_zseas", "EffRatio_x_SeedWP",
+                "PythWinPct"]
 
 
 # ---------------------------------------------------------------------------
