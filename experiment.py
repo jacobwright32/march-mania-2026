@@ -438,12 +438,14 @@ LR_WEIGHT = 0.35
 
 
 def predict_proba(models, scaler, X: pd.DataFrame) -> np.ndarray:
-    """Return P(low-ID team wins) — ensemble with bagged LGB."""
+    """Return P(low-ID team wins) — geometric mean ensemble."""
     lr, lgb_models = models
     X_scaled = scaler.transform(X)
-    lr_preds = lr.predict_proba(X_scaled)[:, 1]
-    lgb_preds = np.mean([m.predict_proba(X_scaled)[:, 1] for m in lgb_models], axis=0)
-    return LR_WEIGHT * lr_preds + (1 - LR_WEIGHT) * lgb_preds
+    lr_preds = np.clip(lr.predict_proba(X_scaled)[:, 1], 1e-6, 1-1e-6)
+    lgb_preds = np.clip(np.mean([m.predict_proba(X_scaled)[:, 1] for m in lgb_models], axis=0), 1e-6, 1-1e-6)
+    # Geometric mean in log space
+    log_blend = LR_WEIGHT * np.log(lr_preds) + (1 - LR_WEIGHT) * np.log(lgb_preds)
+    return np.exp(log_blend)
 
 
 # ---------------------------------------------------------------------------
