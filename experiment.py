@@ -341,7 +341,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 FEATURE_COLS = ["MasseyMeanRank", "EffRatio", "SOS",
-                "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
+                "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5",
                 "NetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "NetEff_x_SeedWP",
                 "UpsetRate", "Upset_x_SeedWP", "EffSOS1_zseas", "EffRatio_x_SeedWP",
