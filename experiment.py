@@ -296,6 +296,17 @@ def build_team_features(data: dict) -> pd.DataFrame:
     exp = 13.91  # basketball exponent
     features["PythWinPct"] = features["AvgPtsFor"] ** exp / (features["AvgPtsFor"] ** exp + features["AvgPtsAgainst"] ** exp + 1e-10)
 
+    # --- PythSOS (iterated SOS using PythWinPct) ---
+    pyth_base = features[["Season", "TeamID", "PythWinPct"]].copy()
+    prev_p = pyth_base.copy()
+    col_name = "PythSOS1"
+    opp_lkp = prev_p.rename(columns={"TeamID": "OppID", "PythWinPct": "OppVal"})
+    m_df = pd.merge(all_games, opp_lkp[["Season", "OppID", "OppVal"]], on=["Season", "OppID"], how="left")
+    new_sos = m_df.groupby(["Season", "TeamID"])["OppVal"].mean().reset_index()
+    new_sos.columns = ["Season", "TeamID", col_name]
+    features = pd.merge(features, new_sos, on=["Season", "TeamID"], how="left")
+    features[col_name] = features[col_name].fillna(0.5)
+
     # --- Win rate vs better opponents (upset resistance) ---
     opp_wp_full = record[["Season", "TeamID", "WinPct"]].copy()
     # Games where team won against a better opponent (higher WinPct)
@@ -345,7 +356,7 @@ FEATURE_COLS = ["MasseyMeanRank", "EffRatio", "SOS",
                 "NetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "NetEff_x_SeedWP",
                 "UpsetRate", "Upset_x_SeedWP", "EffSOS1_zseas", "EffRatio_x_SeedWP",
-                "PythWinPct"]
+                "PythWinPct", "PythSOS1"]
 
 
 # ---------------------------------------------------------------------------
