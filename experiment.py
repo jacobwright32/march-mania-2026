@@ -226,7 +226,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
         eff_sos_base["NetEff"] = eff["NetEff"]
     if eff_sos_base is not None:
         prev = eff_sos_base.copy()
-        for order in range(1, 4):
+        for order in range(1, 7):
             col = f"EffSOS{order}"
             opp_lkp = prev.rename(columns={"TeamID": "OppID", prev.columns[-1]: "OppVal"})
             m = pd.merge(all_games, opp_lkp[["Season", "OppID", "OppVal"]], on=["Season", "OppID"], how="left")
@@ -274,7 +274,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 
 FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "SOS5", "SOS6",
                 "NetEff", "AdjNetEff", "TORate", "KenPomNetEff",
-                "EffSOS1", "EffSOS2", "EffSOS3"]
+                "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6"]
 
 
 # ---------------------------------------------------------------------------
