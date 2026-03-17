@@ -287,6 +287,23 @@ def build_team_features(data: dict) -> pd.DataFrame:
         features = pd.merge(features, seed_wp[["SeedNum", "SeedHistWinPct"]], on="SeedNum", how="left")
         features["SeedHistWinPct"] = features["SeedHistWinPct"].fillna(0.5)
 
+    # --- Win rate vs better opponents (upset resistance) ---
+    opp_wp_full = record[["Season", "TeamID", "WinPct"]].copy()
+    # Games where team won against a better opponent (higher WinPct)
+    w_upsets = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
+        columns={"WTeamID": "TeamID", "LTeamID": "OppID"})
+    w_upsets = pd.merge(w_upsets, opp_wp_full.rename(columns={"TeamID": "OppID", "WinPct": "OppWP"}),
+                         on=["Season", "OppID"], how="left")
+    w_upsets = pd.merge(w_upsets, opp_wp_full, on=["Season", "TeamID"], how="left")
+    w_upsets["BeatBetter"] = (w_upsets["OppWP"] > w_upsets["WinPct"]).astype(int)
+    beat_better = w_upsets.groupby(["Season", "TeamID"]).agg(
+        BeatBetterCount=("BeatBetter", "sum"), TotalWins=("BeatBetter", "count")
+    ).reset_index()
+    beat_better["UpsetRate"] = beat_better["BeatBetterCount"] / beat_better["TotalWins"].replace(0, 1)
+    features = pd.merge(features, beat_better[["Season", "TeamID", "UpsetRate"]],
+                         on=["Season", "TeamID"], how="left")
+    features["UpsetRate"] = features["UpsetRate"].fillna(0.0)
+
     # --- Adjusted metrics ---
     features["AdjPtsDiff"] = features["AvgPtsDiff"] * features["SOS"]
     features["AdjNetEff"] = features["NetEff"] * features["SOS"]
@@ -316,7 +333,8 @@ FEATURE_COLS = ["NetEff", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "AvgPtsDiff",
                 "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
-                "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "PtsDiff_x_SeedWP", "NetEff_x_SeedWP"]
+                "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "PtsDiff_x_SeedWP", "NetEff_x_SeedWP",
+                "UpsetRate"]
 
 
 # ---------------------------------------------------------------------------
