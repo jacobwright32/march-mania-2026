@@ -154,8 +154,9 @@ def build_team_features(data: dict) -> pd.DataFrame:
     else:
         features["SeedNum"] = 16.0
 
-    # --- Adjusted point diff (PtsDiff * SOS) ---
+    # --- Adjusted metrics ---
     features["AdjPtsDiff"] = features["AvgPtsDiff"] * features["SOS"]
+    features["AdjNetEff"] = features["NetEff"] * features["SOS"]
 
     features = features.set_index(["Season", "TeamID"])
     return features
@@ -165,7 +166,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "NetEff"]
+FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "NetEff", "AdjNetEff"]
 
 
 # ---------------------------------------------------------------------------
