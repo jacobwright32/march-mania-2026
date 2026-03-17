@@ -400,7 +400,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     scaler = QuantileTransformer(output_distribution="normal", n_quantiles=50, random_state=42)
     X_scaled = scaler.fit_transform(X_train)
 
-    lr = LogisticRegression(C=0.018, max_iter=1000, solver="lbfgs")
+    lr = LogisticRegression(C=0.02, max_iter=1000, solver="lbfgs")
     lr.fit(X_scaled, y_train)
 
     lgb_models = []
