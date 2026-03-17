@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler
 
 from prepare import (
     DATA_DIR,
@@ -374,7 +374,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     Returns:
         (model, scaler) — scaler transforms features before prediction
     """
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X_train)
 
     model = LogisticRegression(C=0.025, max_iter=1000, solver="lbfgs")
