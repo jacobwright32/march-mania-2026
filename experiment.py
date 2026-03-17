@@ -255,6 +255,14 @@ def build_team_features(data: dict) -> pd.DataFrame:
         features = pd.merge(features, massey_latest, on=["Season", "TeamID"], how="left")
         features["MasseyMeanRank"] = features["MasseyMeanRank"].fillna(150.0)
 
+        # POM (KenPom) ranking specifically
+        pom = massey_end[massey_end["SystemName"] == "POM"]
+        if not pom.empty:
+            pom_rank = pom.groupby(["Season", "TeamID"])["OrdinalRank"].mean().reset_index()
+            pom_rank.columns = ["Season", "TeamID", "POMRank"]
+            features = pd.merge(features, pom_rank, on=["Season", "TeamID"], how="left")
+            features["POMRank"] = features["POMRank"].fillna(150.0)
+
         # Massey percentile (normalized by number of teams per season)
         max_rank_per_season = massey_latest.groupby("Season")["MasseyMeanRank"].max().reset_index()
         max_rank_per_season.columns = ["Season", "MaxRank"]
@@ -356,7 +364,7 @@ FEATURE_COLS = ["MasseyMeanRank", "EffRatio", "SOS",
                 "NetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "NetEff_x_SeedWP",
                 "UpsetRate", "Upset_x_SeedWP", "EffSOS1_zseas", "EffRatio_x_SeedWP",
-                "PythWinPct", "PythSOS1"]
+                "PythWinPct", "PythSOS1", "POMRank"]
 
 
 # ---------------------------------------------------------------------------
