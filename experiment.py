@@ -415,7 +415,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     return (lr, lgb_model), scaler
 
 
-LR_WEIGHT = 0.80
+LR_WEIGHT = 0.70
 
 
 def predict_proba(models, scaler, X: pd.DataFrame) -> np.ndarray:
