@@ -131,6 +131,39 @@ def build_team_features(data: dict) -> pd.DataFrame:
                              on=["Season", "TeamID"], how="left")
         features["TORate"] = features["TORate"].fillna(features["TORate"].median())
 
+    # --- Opponent-adjusted net efficiency (iterative, KenPom-style) ---
+    # Start with raw NetEff per team, then iteratively adjust by opponent quality
+    if "NetEff" in features.columns:
+        adj_eff = features[["Season", "TeamID", "NetEff"]].copy() if "Season" in features.columns else None
+    # Build from record + eff which are not yet indexed
+    adj_eff_df = eff[["Season", "TeamID", "OffEff", "DefEff"]].copy() if not detailed.empty else None
+    if adj_eff_df is not None:
+        games_w = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
+            columns={"WTeamID": "TeamID", "LTeamID": "OppID"})
+        games_l = reg_results[["Season", "LTeamID", "WTeamID"]].rename(
+            columns={"LTeamID": "TeamID", "WTeamID": "OppID"})
+        all_g = pd.concat([games_w, games_l], ignore_index=True)
+
+        # Iterate: adjust OffEff by opponent DefEff and vice versa
+        curr = adj_eff_df.copy()
+        for _ in range(5):
+            opp_lookup = curr.rename(columns={"TeamID": "OppID", "OffEff": "OppOE", "DefEff": "OppDE"})
+            merged = pd.merge(all_g, opp_lookup, on=["Season", "OppID"], how="left")
+            avg_opp = merged.groupby(["Season", "TeamID"]).agg(
+                AvgOppOE=("OppOE", "mean"), AvgOppDE=("OppDE", "mean")
+            ).reset_index()
+            curr = pd.merge(adj_eff_df, avg_opp, on=["Season", "TeamID"], how="left")
+            # Adjust: good offense against good defense is better
+            curr["AdjOE"] = curr["OffEff"] + (curr["AvgOppDE"].fillna(100) - 100)
+            curr["AdjDE"] = curr["DefEff"] - (curr["AvgOppOE"].fillna(100) - 100)
+            curr["OffEff"] = curr["AdjOE"]
+            curr["DefEff"] = curr["AdjDE"]
+
+        curr["KenPomNetEff"] = curr["AdjOE"] - curr["AdjDE"]
+        features = pd.merge(features, curr[["Season", "TeamID", "KenPomNetEff"]],
+                             on=["Season", "TeamID"], how="left")
+        features["KenPomNetEff"] = features["KenPomNetEff"].fillna(0.0)
+
     # --- Strength of schedule (avg opponent win pct) ---
     # Build opponent list for each team
     games_as_winner = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
@@ -222,7 +255,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "SOS5", "SOS6",
-                "NetEff", "AdjNetEff", "TORate"]
+                "NetEff", "AdjNetEff", "TORate", "KenPomNetEff"]
 
 
 # ---------------------------------------------------------------------------
