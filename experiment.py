@@ -111,11 +111,11 @@ def build_team_features(data: dict) -> pd.DataFrame:
         eff["DefEff"] = (eff["WDE"] * eff["Wins"] + eff["LDE"] * eff["Losses"]) / eff["Games"]
         eff["NetEff"] = eff["OffEff"] - eff["DefEff"]
 
-        eff["EffRatio"] = eff["OffEff"] / eff["DefEff"].replace(0, 1)
+        eff["EffRatio"] = np.log(eff["OffEff"] / eff["DefEff"].replace(0, 1) + 1e-6)
         features = pd.merge(features, eff[["Season", "TeamID", "NetEff", "EffRatio"]],
                              on=["Season", "TeamID"], how="left")
         features["NetEff"] = features["NetEff"].fillna(0.0)
-        features["EffRatio"] = features["EffRatio"].fillna(1.0)
+        features["EffRatio"] = features["EffRatio"].fillna(0.0)
 
         # --- Turnover rate ---
         detailed["WTORate"] = detailed["WTO"] / detailed["WPoss"].replace(0, 1)
