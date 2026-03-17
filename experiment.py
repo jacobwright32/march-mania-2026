@@ -111,9 +111,11 @@ def build_team_features(data: dict) -> pd.DataFrame:
         eff["DefEff"] = (eff["WDE"] * eff["Wins"] + eff["LDE"] * eff["Losses"]) / eff["Games"]
         eff["NetEff"] = eff["OffEff"] - eff["DefEff"]
 
-        features = pd.merge(features, eff[["Season", "TeamID", "NetEff"]],
+        eff["EffRatio"] = eff["OffEff"] / eff["DefEff"].replace(0, 1)
+        features = pd.merge(features, eff[["Season", "TeamID", "NetEff", "EffRatio"]],
                              on=["Season", "TeamID"], how="left")
         features["NetEff"] = features["NetEff"].fillna(0.0)
+        features["EffRatio"] = features["EffRatio"].fillna(1.0)
 
         # --- Turnover rate ---
         detailed["WTORate"] = detailed["WTO"] / detailed["WPoss"].replace(0, 1)
@@ -330,7 +332,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["NetEff", "KenPomNetEff",
+FEATURE_COLS = ["NetEff", "EffRatio", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "NetEff_x_SeedWP",
