@@ -142,9 +142,36 @@ LOOP FOREVER:
 
 The loop runs until the human interrupts you.
 
-## Research ideas (suggested order)
+## Research strategy: start simple, escalate gradually
 
-### Feature engineering:
+**CRITICAL**: Always start with the fastest, simplest approaches first. The early experiments should be quick wins — adding obvious features, trying basic model swaps, tuning easy hyperparameters. Do NOT jump to complex solutions (ensembles, stacking, neural nets, elaborate feature engineering) until you have exhausted the simple ones.
+
+**Phase 1 — Quick wins (do these first):**
+- Add obvious features one at a time (seed, win%, scoring stats)
+- Try the 2–3 most common model types (logistic regression, XGBoost, LightGBM)
+- Basic hyperparameter tweaks (regularization strength, tree depth)
+- Each experiment should be fast and targeted — change ONE thing at a time
+
+**Phase 2 — Deeper feature engineering (once Phase 1 plateaus):**
+- Detailed box score stats (shooting %, rebounds, turnovers, etc.)
+- Derived stats (efficiency, pace, strength of schedule)
+- Multi-season rolling features, momentum features
+- Massey ordinal rankings integration
+- Still keep individual experiments focused
+
+**Phase 3 — Advanced modeling (only when you hit a metric floor with Phase 2):**
+- Ensembling and stacking multiple models
+- Probability calibration
+- Feature interactions and polynomial features
+- Hyperparameter search (grid/random on inner CV)
+- Neural networks, Bayesian models
+- These are slower and more complex — only worth it when simpler methods have truly plateaued
+
+**How to know when to escalate**: If 3+ consecutive experiments at the current phase fail to improve val_brier, move to the next phase. If you're in Phase 3 and still stuck, try creative combinations or revisit earlier ideas with fresh perspective.
+
+## Research ideas (organized by phase)
+
+### Phase 1 — Feature additions (fast, one at a time):
 1. Add detailed box score stats (FG%, 3P%, FT%, rebounds, assists, turnovers, steals, blocks)
 2. Add offensive/defensive efficiency (points per possession)
 3. Add strength of schedule (average opponent win pct)
@@ -156,19 +183,24 @@ The loop runs until the human interrupts you.
 9. Add variance/consistency features (std of scoring)
 10. Add pace features (possessions per game)
 
-### Feature construction:
+### Phase 2 — Deeper feature engineering (when Phase 1 plateaus):
 1. Try ratios instead of (or in addition to) differences
-2. Try interaction features (e.g., seed * win_pct)
-3. Try polynomial features
-4. Try rolling averages over multiple seasons
-5. Try weighting recent seasons more heavily
+2. Add offensive/defensive efficiency (points per possession)
+3. Add strength of schedule (average opponent win pct)
+4. Add conference strength features
+5. Add momentum features (last N games performance)
+6. Add Massey ordinal rankings (aggregate multiple ranking systems)
+7. Try rolling averages over multiple seasons
+8. Try weighting recent seasons more heavily
 
-### Modeling:
+### Phase 3 — Advanced modeling (when Phase 2 plateaus):
 1. Try XGBoost / LightGBM gradient boosting
 2. Try ensemble of logistic regression + GBM
-3. Try neural network (sklearn MLPClassifier)
-4. Try probability calibration (CalibratedClassifierCV)
-5. Try Bayesian approaches (Bradley-Terry model)
+3. Try interaction features (e.g., seed * win_pct)
+4. Try polynomial features
+5. Try probability calibration (CalibratedClassifierCV)
 6. Try stacking / blending multiple models
 7. Try hyperparameter tuning (grid search on inner CV)
 8. Try feature selection (mutual information, recursive elimination)
+9. Try neural network (sklearn MLPClassifier)
+10. Try Bayesian approaches (Bradley-Terry model)
