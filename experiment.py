@@ -260,6 +260,26 @@ def build_team_features(data: dict) -> pd.DataFrame:
     else:
         features["SeedNum"] = 16.0
 
+    # --- Historical seed win rate ---
+    tourney_results = pd.concat([data.get(k, pd.DataFrame()) for k in ["MNCAATourneyCompactResults", "WNCAATourneyCompactResults"]], ignore_index=True)
+    if not tourney_results.empty and not seeds.empty:
+        all_seeds = load_seeds(data)
+        all_seeds["SeedNum"] = all_seeds["Seed"].str.extract(r"(\d+)").astype(float)
+        # Merge seeds for both winner and loser
+        tr = tourney_results.merge(all_seeds[["Season", "TeamID", "SeedNum"]].rename(columns={"TeamID": "WTeamID", "SeedNum": "WSeed"}),
+                                     on=["Season", "WTeamID"], how="left")
+        tr = tr.merge(all_seeds[["Season", "TeamID", "SeedNum"]].rename(columns={"TeamID": "LTeamID", "SeedNum": "LSeed"}),
+                        on=["Season", "LTeamID"], how="left")
+        # Compute win rate per seed
+        w_seed_wins = tr.groupby("WSeed").size().reset_index(name="Wins")
+        l_seed_losses = tr.groupby("LSeed").size().reset_index(name="Losses")
+        seed_wp = pd.merge(w_seed_wins.rename(columns={"WSeed": "SeedNum"}),
+                            l_seed_losses.rename(columns={"LSeed": "SeedNum"}),
+                            on="SeedNum", how="outer").fillna(0)
+        seed_wp["SeedHistWinPct"] = seed_wp["Wins"] / (seed_wp["Wins"] + seed_wp["Losses"]).replace(0, 1)
+        features = pd.merge(features, seed_wp[["SeedNum", "SeedHistWinPct"]], on="SeedNum", how="left")
+        features["SeedHistWinPct"] = features["SeedHistWinPct"].fillna(0.5)
+
     # --- Adjusted metrics ---
     features["AdjPtsDiff"] = features["AvgPtsDiff"] * features["SOS"]
     features["AdjNetEff"] = features["NetEff"] * features["SOS"]
@@ -284,7 +304,8 @@ FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4",
                 "NetEff", "AdjNetEff", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "AvgPtsDiff",
-                "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas"]
+                "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
+                "SeedHistWinPct"]
 
 
 # ---------------------------------------------------------------------------
