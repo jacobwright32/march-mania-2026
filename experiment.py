@@ -86,9 +86,12 @@ def build_team_features(data: dict) -> pd.DataFrame:
     # --- Massey ordinal rankings (men only) ---
     massey = load_massey_ordinals(data)
     if not massey.empty:
-        # Use end-of-regular-season rankings (day 128 = Selection Sunday area)
-        # Take the latest available ranking day per season per team
-        massey_latest = massey.groupby(["Season", "TeamID"]).agg(
+        # Use only the latest ranking day per season (closest to tournament)
+        last_day = massey.groupby(["Season", "SystemName"])["RankingDayNum"].max().reset_index()
+        last_day.columns = ["Season", "SystemName", "LastDay"]
+        massey = massey.merge(last_day, on=["Season", "SystemName"])
+        massey_end = massey[massey["RankingDayNum"] == massey["LastDay"]]
+        massey_latest = massey_end.groupby(["Season", "TeamID"]).agg(
             MasseyMeanRank=("OrdinalRank", "mean")
         ).reset_index()
         features = pd.merge(features, massey_latest, on=["Season", "TeamID"], how="left")
