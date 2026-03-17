@@ -83,6 +83,22 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(record, scoring[["Season", "TeamID", "AvgPtsFor", "AvgPtsAgainst", "AvgPtsDiff"]],
                         on=["Season", "TeamID"], how="left")
 
+    # --- Strength of schedule (avg opponent win pct) ---
+    # Build opponent list for each team
+    games_as_winner = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
+        columns={"WTeamID": "TeamID", "LTeamID": "OppID"})
+    games_as_loser = reg_results[["Season", "LTeamID", "WTeamID"]].rename(
+        columns={"LTeamID": "TeamID", "WTeamID": "OppID"})
+    all_games = pd.concat([games_as_winner, games_as_loser], ignore_index=True)
+    # Merge opponent win pct
+    opp_wp = pd.merge(all_games, record[["Season", "TeamID", "WinPct"]],
+                       left_on=["Season", "OppID"], right_on=["Season", "TeamID"],
+                       suffixes=("", "_opp"))
+    sos = opp_wp.groupby(["Season", "TeamID"])["WinPct_opp"].mean().reset_index()
+    sos.columns = ["Season", "TeamID", "SOS"]
+    features = pd.merge(features, sos, on=["Season", "TeamID"], how="left")
+    features["SOS"] = features["SOS"].fillna(0.5)
+
     # --- Massey ordinal rankings (men only) ---
     massey = load_massey_ordinals(data)
     if not massey.empty:
@@ -115,7 +131,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["WinPct", "AvgPtsDiff", "SeedNum", "MasseyMeanRank"]
+FEATURE_COLS = ["WinPct", "AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS"]
 
 
 # ---------------------------------------------------------------------------
