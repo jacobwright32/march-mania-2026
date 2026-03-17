@@ -404,7 +404,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     lr.fit(X_scaled, y_train)
 
     lgb_model = lgb.LGBMClassifier(
-        n_estimators=50, max_depth=3, learning_rate=0.05,
+        n_estimators=80, max_depth=3, learning_rate=0.03,
         num_leaves=8, min_child_samples=15,
         reg_alpha=1.0, reg_lambda=2.0,
         subsample=0.8, colsample_bytree=0.6,
