@@ -403,27 +403,30 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     lr = LogisticRegression(C=0.015, max_iter=1000, solver="lbfgs")
     lr.fit(X_scaled, y_train)
 
-    lgb_model = lgb.LGBMClassifier(
-        n_estimators=80, max_depth=3, learning_rate=0.03,
-        num_leaves=8, min_child_samples=10,
-        reg_alpha=1.0, reg_lambda=2.0,
-        subsample=0.8, colsample_bytree=0.6,
-        verbose=-1, random_state=42,
-    )
-    lgb_model.fit(X_scaled, y_train)
+    lgb_models = []
+    for seed in [42, 123, 456]:
+        m = lgb.LGBMClassifier(
+            n_estimators=80, max_depth=3, learning_rate=0.03,
+            num_leaves=8, min_child_samples=10,
+            reg_alpha=1.0, reg_lambda=2.0,
+            subsample=0.8, colsample_bytree=0.6,
+            verbose=-1, random_state=seed,
+        )
+        m.fit(X_scaled, y_train)
+        lgb_models.append(m)
 
-    return (lr, lgb_model), scaler
+    return (lr, lgb_models), scaler
 
 
 LR_WEIGHT = 0.70
 
 
 def predict_proba(models, scaler, X: pd.DataFrame) -> np.ndarray:
-    """Return P(low-ID team wins) — ensemble."""
-    lr, lgb_model = models
+    """Return P(low-ID team wins) — ensemble with bagged LGB."""
+    lr, lgb_models = models
     X_scaled = scaler.transform(X)
     lr_preds = lr.predict_proba(X_scaled)[:, 1]
-    lgb_preds = lgb_model.predict_proba(X_scaled)[:, 1]
+    lgb_preds = np.mean([m.predict_proba(X_scaled)[:, 1] for m in lgb_models], axis=0)
     return LR_WEIGHT * lr_preds + (1 - LR_WEIGHT) * lgb_preds
 
 
