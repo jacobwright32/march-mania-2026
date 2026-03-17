@@ -91,10 +91,9 @@ def build_team_features(data: dict) -> pd.DataFrame:
         columns={"LTeamID": "TeamID", "WTeamID": "OppID"})
     all_games = pd.concat([games_as_winner, games_as_loser], ignore_index=True)
     # Merge opponent win pct
-    opp_wp = pd.merge(all_games, record[["Season", "TeamID", "WinPct"]],
-                       left_on=["Season", "OppID"], right_on=["Season", "TeamID"],
-                       suffixes=("", "_opp"))
-    sos = opp_wp.groupby(["Season", "TeamID"])["WinPct_opp"].mean().reset_index()
+    opp_wp_lookup = record[["Season", "TeamID", "WinPct"]].rename(columns={"TeamID": "OppID", "WinPct": "OppWinPct"})
+    opp_wp = pd.merge(all_games, opp_wp_lookup, on=["Season", "OppID"], how="left")
+    sos = opp_wp.groupby(["Season", "TeamID"])["OppWinPct"].mean().reset_index()
     sos.columns = ["Season", "TeamID", "SOS"]
     features = pd.merge(features, sos, on=["Season", "TeamID"], how="left")
     features["SOS"] = features["SOS"].fillna(0.5)
