@@ -152,7 +152,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_train)
 
-    model = LogisticRegression(C=1.0, max_iter=1000, solver="lbfgs")
+    model = LogisticRegression(C=0.1, max_iter=1000, solver="lbfgs")
     model.fit(X_scaled, y_train)
 
     return model, scaler
