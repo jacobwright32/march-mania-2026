@@ -453,7 +453,10 @@ def predict_proba(models, scaler, X: pd.DataFrame) -> np.ndarray:
     lgb_preds = np.clip(np.mean([m.predict_proba(X_scaled)[:, 1] for m in lgb_models], axis=0), 1e-6, 1-1e-6)
     # Geometric mean in log space
     log_blend = LR_WEIGHT * np.log(lr_preds) + (1 - LR_WEIGHT) * np.log(lgb_preds)
-    return np.exp(log_blend)
+    raw = np.exp(log_blend)
+    # Shrink toward 0.5 to reduce Brier reliability component
+    SHRINKAGE = 0.03
+    return raw * (1 - SHRINKAGE) + 0.5 * SHRINKAGE
 
 
 # ---------------------------------------------------------------------------
