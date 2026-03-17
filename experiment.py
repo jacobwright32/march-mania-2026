@@ -455,7 +455,7 @@ def predict_proba(models, scaler, X: pd.DataFrame) -> np.ndarray:
     log_blend = LR_WEIGHT * np.log(lr_preds) + (1 - LR_WEIGHT) * np.log(lgb_preds)
     raw = np.exp(log_blend)
     # Shrink toward 0.5 to reduce Brier reliability component
-    SHRINKAGE = 0.03
+    SHRINKAGE = 0.02
     return raw * (1 - SHRINKAGE) + 0.5 * SHRINKAGE
 
 
