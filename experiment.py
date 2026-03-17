@@ -162,6 +162,14 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(features, sos3, on=["Season", "TeamID"], how="left")
     features["SOS3"] = features["SOS3"].fillna(0.5)
 
+    # --- Fourth-order SOS ---
+    opp_sos3_lookup = sos3.rename(columns={"TeamID": "OppID", "SOS3": "OppSOS3"})
+    opp_sos4 = pd.merge(all_games, opp_sos3_lookup, on=["Season", "OppID"], how="left")
+    sos4 = opp_sos4.groupby(["Season", "TeamID"])["OppSOS3"].mean().reset_index()
+    sos4.columns = ["Season", "TeamID", "SOS4"]
+    features = pd.merge(features, sos4, on=["Season", "TeamID"], how="left")
+    features["SOS4"] = features["SOS4"].fillna(0.5)
+
     # --- Massey ordinal rankings (men only) ---
     massey = load_massey_ordinals(data)
     if not massey.empty:
@@ -198,7 +206,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "NetEff", "AdjNetEff", "TORate"]
+FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "NetEff", "AdjNetEff", "TORate"]
 
 
 # ---------------------------------------------------------------------------
