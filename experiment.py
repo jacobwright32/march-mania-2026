@@ -396,7 +396,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     Returns:
         (model, scaler) — scaler transforms features before prediction
     """
-    scaler = QuantileTransformer(output_distribution="normal", n_quantiles=100, random_state=42)
+    scaler = QuantileTransformer(output_distribution="normal", n_quantiles=50, random_state=42)
     X_scaled = scaler.fit_transform(X_train)
 
     model = LogisticRegression(C=0.015, max_iter=1000, solver="lbfgs")
