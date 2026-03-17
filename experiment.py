@@ -399,7 +399,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     scaler = QuantileTransformer(output_distribution="normal", random_state=42)
     X_scaled = scaler.fit_transform(X_train)
 
-    model = LogisticRegression(C=0.02, max_iter=1000, solver="lbfgs")
+    model = LogisticRegression(C=0.015, max_iter=1000, solver="lbfgs")
     model.fit(X_scaled, y_train)
 
     return model, scaler
