@@ -299,6 +299,9 @@ def build_team_features(data: dict) -> pd.DataFrame:
             season_std = features.groupby("Season")[col].transform("std").replace(0, 1)
             features[f"{col}_zseas"] = (features[col] - season_mean) / season_std
 
+    # --- Interaction: efficiency * seed quality ---
+    features["KenPom_x_SeedWP"] = features["KenPomNetEff"] * features["SeedHistWinPct"]
+
     features = features.set_index(["Season", "TeamID"])
     return features
 
@@ -312,7 +315,7 @@ FEATURE_COLS = ["MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "AvgPtsDiff",
                 "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
-                "SeedHistWinPct", "MasseyPctile"]
+                "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP"]
 
 
 # ---------------------------------------------------------------------------
