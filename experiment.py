@@ -220,12 +220,14 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(features, sos6, on=["Season", "TeamID"], how="left")
     features["SOS6"] = features["SOS6"].fillna(0.5)
 
-    # --- Efficiency-based SOS (iterated, using NetEff instead of WinPct) ---
-    if "NetEff" in features.columns:
-        eff_sos_base = features[["Season", "TeamID", "NetEff"]].copy() if "Season" in features.columns else None
+    # --- Efficiency-based SOS (iterated, using EffRatio instead of NetEff) ---
+    if "EffRatio" in features.columns:
+        eff_sos_base = features[["Season", "TeamID", "EffRatio"]].copy() if "Season" in features.columns else None
+    else:
+        eff_sos_base = None
     if eff_sos_base is None and not detailed.empty:
         eff_sos_base = eff[["Season", "TeamID"]].copy()
-        eff_sos_base["NetEff"] = eff["NetEff"]
+        eff_sos_base["EffRatio"] = np.log(eff["OffEff"] / eff["DefEff"].replace(0, 1) + 1e-6)
     if eff_sos_base is not None:
         prev = eff_sos_base.copy()
         for order in range(1, 7):
