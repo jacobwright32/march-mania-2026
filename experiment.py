@@ -130,7 +130,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["WinPct", "AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS"]
+FEATURE_COLS = ["AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS"]
 
 
 # ---------------------------------------------------------------------------
