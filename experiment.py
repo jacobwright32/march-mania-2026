@@ -83,6 +83,17 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(record, scoring[["Season", "TeamID", "AvgPtsFor", "AvgPtsAgainst", "AvgPtsDiff"]],
                         on=["Season", "TeamID"], how="left")
 
+    # --- Massey ordinal rankings (men only) ---
+    massey = load_massey_ordinals(data)
+    if not massey.empty:
+        # Use end-of-regular-season rankings (day 128 = Selection Sunday area)
+        # Take the latest available ranking day per season per team
+        massey_latest = massey.groupby(["Season", "TeamID"]).agg(
+            MasseyMeanRank=("OrdinalRank", "mean")
+        ).reset_index()
+        features = pd.merge(features, massey_latest, on=["Season", "TeamID"], how="left")
+        features["MasseyMeanRank"] = features["MasseyMeanRank"].fillna(150.0)
+
     # --- Seed (numeric) ---
     if not seeds.empty:
         seeds = seeds.copy()
@@ -101,7 +112,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["WinPct", "AvgPtsFor", "AvgPtsAgainst", "AvgPtsDiff", "SeedNum"]
+FEATURE_COLS = ["WinPct", "AvgPtsFor", "AvgPtsAgainst", "AvgPtsDiff", "SeedNum", "MasseyMeanRank"]
 
 
 # ---------------------------------------------------------------------------
