@@ -250,6 +250,13 @@ def build_team_features(data: dict) -> pd.DataFrame:
         features = pd.merge(features, massey_latest, on=["Season", "TeamID"], how="left")
         features["MasseyMeanRank"] = features["MasseyMeanRank"].fillna(150.0)
 
+        # Massey percentile (normalized by number of teams per season)
+        max_rank_per_season = massey_latest.groupby("Season")["MasseyMeanRank"].max().reset_index()
+        max_rank_per_season.columns = ["Season", "MaxRank"]
+        features = pd.merge(features, max_rank_per_season, on="Season", how="left")
+        features["MasseyPctile"] = features["MasseyMeanRank"] / features["MaxRank"].fillna(350)
+        features.drop(columns=["MaxRank"], inplace=True)
+
     # --- Seed (numeric) ---
     if not seeds.empty:
         seeds = seeds.copy()
@@ -305,7 +312,7 @@ FEATURE_COLS = ["MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "AvgPtsDiff",
                 "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
-                "SeedHistWinPct"]
+                "SeedHistWinPct", "MasseyPctile"]
 
 
 # ---------------------------------------------------------------------------
