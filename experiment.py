@@ -218,6 +218,24 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(features, sos6, on=["Season", "TeamID"], how="left")
     features["SOS6"] = features["SOS6"].fillna(0.5)
 
+    # --- Efficiency-based SOS (iterated, using NetEff instead of WinPct) ---
+    if "NetEff" in features.columns:
+        eff_sos_base = features[["Season", "TeamID", "NetEff"]].copy() if "Season" in features.columns else None
+    if eff_sos_base is None and not detailed.empty:
+        eff_sos_base = eff[["Season", "TeamID"]].copy()
+        eff_sos_base["NetEff"] = eff["NetEff"]
+    if eff_sos_base is not None:
+        prev = eff_sos_base.copy()
+        for order in range(1, 4):
+            col = f"EffSOS{order}"
+            opp_lkp = prev.rename(columns={"TeamID": "OppID", prev.columns[-1]: "OppVal"})
+            m = pd.merge(all_games, opp_lkp[["Season", "OppID", "OppVal"]], on=["Season", "OppID"], how="left")
+            new_sos = m.groupby(["Season", "TeamID"])["OppVal"].mean().reset_index()
+            new_sos.columns = ["Season", "TeamID", col]
+            features = pd.merge(features, new_sos, on=["Season", "TeamID"], how="left")
+            features[col] = features[col].fillna(0.0)
+            prev = new_sos
+
     # --- Massey ordinal rankings (men only) ---
     massey = load_massey_ordinals(data)
     if not massey.empty:
@@ -255,7 +273,8 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "SOS5", "SOS6",
-                "NetEff", "AdjNetEff", "TORate", "KenPomNetEff"]
+                "NetEff", "AdjNetEff", "TORate", "KenPomNetEff",
+                "EffSOS1", "EffSOS2", "EffSOS3"]
 
 
 # ---------------------------------------------------------------------------
