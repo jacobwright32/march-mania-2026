@@ -264,6 +264,14 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features["AdjPtsDiff"] = features["AvgPtsDiff"] * features["SOS"]
     features["AdjNetEff"] = features["NetEff"] * features["SOS"]
 
+    # --- Per-season standardization of key features ---
+    season_norm_cols = ["AvgPtsDiff", "NetEff", "AdjNetEff", "KenPomNetEff"]
+    for col in season_norm_cols:
+        if col in features.columns:
+            season_mean = features.groupby("Season")[col].transform("mean")
+            season_std = features.groupby("Season")[col].transform("std").replace(0, 1)
+            features[f"{col}_zseas"] = (features[col] - season_mean) / season_std
+
     features = features.set_index(["Season", "TeamID"])
     return features
 
@@ -275,7 +283,8 @@ def build_team_features(data: dict) -> pd.DataFrame:
 FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4",
                 "NetEff", "AdjNetEff", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
-                "AvgPtsDiff"]
+                "AvgPtsDiff",
+                "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas"]
 
 
 # ---------------------------------------------------------------------------
