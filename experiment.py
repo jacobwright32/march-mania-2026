@@ -115,6 +115,22 @@ def build_team_features(data: dict) -> pd.DataFrame:
                              on=["Season", "TeamID"], how="left")
         features["NetEff"] = features["NetEff"].fillna(0.0)
 
+        # --- Turnover rate ---
+        detailed["WTORate"] = detailed["WTO"] / detailed["WPoss"].replace(0, 1)
+        detailed["LTORate"] = detailed["LTO"] / detailed["LPoss"].replace(0, 1)
+        w_to = detailed.groupby(["Season", "WTeamID"])["WTORate"].mean().reset_index()
+        w_to.columns = ["Season", "TeamID", "WTORate"]
+        l_to = detailed.groupby(["Season", "LTeamID"])["LTORate"].mean().reset_index()
+        l_to.columns = ["Season", "TeamID", "LTORate"]
+        to_merged = pd.merge(w_to, l_to, on=["Season", "TeamID"], how="outer").fillna(0)
+        to_merged = pd.merge(to_merged, record[["Season", "TeamID", "Wins", "Losses", "Games"]],
+                              on=["Season", "TeamID"], how="left")
+        to_merged["TORate"] = (to_merged["WTORate"] * to_merged["Wins"] +
+                                to_merged["LTORate"] * to_merged["Losses"]) / to_merged["Games"]
+        features = pd.merge(features, to_merged[["Season", "TeamID", "TORate"]],
+                             on=["Season", "TeamID"], how="left")
+        features["TORate"] = features["TORate"].fillna(features["TORate"].median())
+
     # --- Strength of schedule (avg opponent win pct) ---
     # Build opponent list for each team
     games_as_winner = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
@@ -166,7 +182,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "NetEff", "AdjNetEff"]
+FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "NetEff", "AdjNetEff", "TORate"]
 
 
 # ---------------------------------------------------------------------------
