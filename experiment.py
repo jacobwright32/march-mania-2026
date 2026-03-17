@@ -320,6 +320,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features["KenPom_x_SeedWP"] = features["KenPomNetEff"] * features["SeedHistWinPct"]
     features["PtsDiff_x_SeedWP"] = features["AvgPtsDiff"] * features["SeedHistWinPct"]
     features["NetEff_x_SeedWP"] = features["NetEff"] * features["SeedHistWinPct"]
+    features["Upset_x_SeedWP"] = features["UpsetRate"] * features["SeedHistWinPct"]
 
     features = features.set_index(["Season", "TeamID"])
     return features
@@ -334,7 +335,7 @@ FEATURE_COLS = ["NetEff", "KenPomNetEff",
                 "AvgPtsDiff",
                 "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
                 "SeedHistWinPct", "MasseyPctile", "KenPom_x_SeedWP", "PtsDiff_x_SeedWP", "NetEff_x_SeedWP",
-                "UpsetRate"]
+                "UpsetRate", "Upset_x_SeedWP"]
 
 
 # ---------------------------------------------------------------------------
