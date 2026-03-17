@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import QuantileTransformer, RobustScaler, StandardScaler
 
 from prepare import (
     DATA_DIR,
@@ -396,7 +396,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series):
     Returns:
         (model, scaler) — scaler transforms features before prediction
     """
-    scaler = RobustScaler()
+    scaler = QuantileTransformer(output_distribution="normal", random_state=42)
     X_scaled = scaler.fit_transform(X_train)
 
     model = LogisticRegression(C=0.02, max_iter=1000, solver="lbfgs")
