@@ -312,8 +312,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["MasseyMeanRank",
-                "NetEff", "KenPomNetEff",
+FEATURE_COLS = ["NetEff", "KenPomNetEff",
                 "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
                 "AvgPtsDiff",
                 "AvgPtsDiff_zseas", "NetEff_zseas", "AdjNetEff_zseas", "KenPomNetEff_zseas",
