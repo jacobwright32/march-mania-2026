@@ -274,7 +274,8 @@ def build_team_features(data: dict) -> pd.DataFrame:
 
 FEATURE_COLS = ["SeedNum", "MasseyMeanRank", "SOS", "SOS2", "SOS3", "SOS4", "SOS5", "SOS6",
                 "NetEff", "AdjNetEff", "TORate", "KenPomNetEff",
-                "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6"]
+                "EffSOS1", "EffSOS2", "EffSOS3", "EffSOS4", "EffSOS5", "EffSOS6",
+                "AvgPtsDiff"]
 
 
 # ---------------------------------------------------------------------------
