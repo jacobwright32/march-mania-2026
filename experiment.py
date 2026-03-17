@@ -137,11 +137,15 @@ FEATURE_COLS = ["AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS"]
 # Matchup feature builder
 # ---------------------------------------------------------------------------
 
+RATIO_COLS = ["SeedNum", "MasseyMeanRank"]
+
+
 def build_matchup_features(team_features: pd.DataFrame, matchups: pd.DataFrame) -> pd.DataFrame:
     """Build pairwise matchup features from team-level features.
 
     For each matchup (Season, TeamID_low, TeamID_high), computes:
       - Difference: low_feature - high_feature  (for each feature)
+      - Ratio: low_feature / high_feature  (for selected features)
 
     Returns DataFrame aligned with matchups index.
     """
@@ -153,12 +157,17 @@ def build_matchup_features(team_features: pd.DataFrame, matchups: pd.DataFrame) 
             f_low = team_features.loc[(season, t_low)]
             f_high = team_features.loc[(season, t_high)]
         except KeyError:
-            # If team not found, use neutral features
-            rows.append({f"{c}_diff": 0.0 for c in FEATURE_COLS})
+            row = {f"{c}_diff": 0.0 for c in FEATURE_COLS}
+            for c in RATIO_COLS:
+                row[f"{c}_ratio"] = 1.0
+            rows.append(row)
             continue
         row = {}
         for c in FEATURE_COLS:
             row[f"{c}_diff"] = f_low[c] - f_high[c]
+        for c in RATIO_COLS:
+            denom = f_high[c] if f_high[c] != 0 else 1.0
+            row[f"{c}_ratio"] = f_low[c] / denom
         rows.append(row)
     return pd.DataFrame(rows, index=matchups.index)
 
