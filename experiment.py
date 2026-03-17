@@ -83,6 +83,38 @@ def build_team_features(data: dict) -> pd.DataFrame:
     features = pd.merge(record, scoring[["Season", "TeamID", "AvgPtsFor", "AvgPtsAgainst", "AvgPtsDiff"]],
                         on=["Season", "TeamID"], how="left")
 
+    # --- Offensive/Defensive efficiency (points per possession) ---
+    detailed = load_regular_season_detailed(data)
+    if not detailed.empty:
+        # Possession estimate: FGA - OR + TO + 0.475*FTA
+        # Winner possessions
+        detailed["WPoss"] = detailed["WFGA"] - detailed["WOR"] + detailed["WTO"] + 0.475 * detailed["WFTA"]
+        detailed["LPoss"] = detailed["LFGA"] - detailed["LOR"] + detailed["LTO"] + 0.475 * detailed["LFTA"]
+        # Offensive efficiency = points / possessions * 100
+        detailed["WOffEff"] = detailed["WScore"] / detailed["WPoss"].replace(0, 1) * 100
+        detailed["LOffEff"] = detailed["LScore"] / detailed["LPoss"].replace(0, 1) * 100
+        # Defensive efficiency = opponent points / own possessions * 100
+        detailed["WDefEff"] = detailed["LScore"] / detailed["WPoss"].replace(0, 1) * 100
+        detailed["LDefEff"] = detailed["WScore"] / detailed["LPoss"].replace(0, 1) * 100
+
+        w_eff = detailed.groupby(["Season", "WTeamID"]).agg(
+            WOE=("WOffEff", "mean"), WDE=("WDefEff", "mean")
+        ).reset_index().rename(columns={"WTeamID": "TeamID"})
+        l_eff = detailed.groupby(["Season", "LTeamID"]).agg(
+            LOE=("LOffEff", "mean"), LDE=("LDefEff", "mean")
+        ).reset_index().rename(columns={"LTeamID": "TeamID"})
+
+        eff = pd.merge(w_eff, l_eff, on=["Season", "TeamID"], how="outer").fillna(0)
+        eff = pd.merge(eff, record[["Season", "TeamID", "Wins", "Losses", "Games"]],
+                         on=["Season", "TeamID"], how="left")
+        eff["OffEff"] = (eff["WOE"] * eff["Wins"] + eff["LOE"] * eff["Losses"]) / eff["Games"]
+        eff["DefEff"] = (eff["WDE"] * eff["Wins"] + eff["LDE"] * eff["Losses"]) / eff["Games"]
+        eff["NetEff"] = eff["OffEff"] - eff["DefEff"]
+
+        features = pd.merge(features, eff[["Season", "TeamID", "NetEff"]],
+                             on=["Season", "TeamID"], how="left")
+        features["NetEff"] = features["NetEff"].fillna(0.0)
+
     # --- Strength of schedule (avg opponent win pct) ---
     # Build opponent list for each team
     games_as_winner = reg_results[["Season", "WTeamID", "LTeamID"]].rename(
@@ -133,7 +165,7 @@ def build_team_features(data: dict) -> pd.DataFrame:
 # Feature columns used for modeling (edit to add/remove features)
 # ---------------------------------------------------------------------------
 
-FEATURE_COLS = ["AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS", "AdjPtsDiff"]
+FEATURE_COLS = ["AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS", "AdjPtsDiff", "NetEff"]
 
 
 # ---------------------------------------------------------------------------
