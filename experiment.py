@@ -137,7 +137,7 @@ FEATURE_COLS = ["AvgPtsDiff", "SeedNum", "MasseyMeanRank", "SOS"]
 # Matchup feature builder
 # ---------------------------------------------------------------------------
 
-RATIO_COLS = ["SeedNum", "MasseyMeanRank"]
+RATIO_COLS = ["SeedNum", "MasseyMeanRank", "SOS"]
 
 
 def build_matchup_features(team_features: pd.DataFrame, matchups: pd.DataFrame) -> pd.DataFrame:
